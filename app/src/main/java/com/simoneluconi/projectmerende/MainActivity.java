@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
             if (m != null) {
                 holder.currQty = m.getCurrentQty();
                 holder.qty.setText(String.valueOf(holder.currQty));
+                Merende.get(position).setCurrentQty(m.getCurrentQty());
             }
 
 
