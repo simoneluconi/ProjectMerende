@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             UpdateTotale(Merende, true);
+            mRecyclerView.getAdapter().notifyDataSetChanged();
         }
         return super.onOptionsItemSelected(item);
     }
