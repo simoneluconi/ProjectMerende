@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL = "https://www.simoneluconi.com/merende/";
     public List<Merenda> Merende;
     TextView txtTotale;
-    MerendeAdapter adapter;
+    RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        final RecyclerView mRecyclerView = findViewById(R.id.rv);
+        mRecyclerView = findViewById(R.id.rv);
         txtTotale = findViewById(R.id.totale);
         txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€", 0.00));
 
@@ -91,12 +91,12 @@ public class MainActivity extends AppCompatActivity {
                 SugarRecord.save(m);
             }
 
-            UpdateTotale(Merende);
+            UpdateTotale(Merende, true);
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void UpdateTotale(List<Merenda> merende) {
+    public void UpdateTotale(List<Merenda> merende, boolean updateDB) {
         double totale = 0;
 
         int pizzeTotali = 0;
@@ -115,7 +115,8 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-            SugarRecord.update(m);
+            if (updateDB)
+                SugarRecord.update(m);
         }
 
         if (pizzeTotali > 0) {
@@ -160,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Merende.get(position).setCurrentQty(holder.currQty);
 
-                        UpdateTotale(Merende);
+                        UpdateTotale(Merende, true);
                     }
                 }
             });
@@ -172,10 +173,12 @@ public class MainActivity extends AppCompatActivity {
                         holder.currQty--;
                         holder.qty.setText(String.valueOf(holder.currQty));
                         Merende.get(position).setCurrentQty(holder.currQty);
-                        UpdateTotale(Merende);
+                        UpdateTotale(Merende, true);
                     }
                 }
             });
+
+            UpdateTotale(Merende, false);
         }
 
         @Override
