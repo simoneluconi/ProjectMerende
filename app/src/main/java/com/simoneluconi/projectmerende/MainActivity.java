@@ -19,6 +19,7 @@ import com.orm.SugarRecord;
 import com.simoneluconi.projectmerende.API.APIInterface;
 import com.simoneluconi.projectmerende.API.Merenda;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
+
+        Merende = new ArrayList<>();
 
         mRecyclerView = findViewById(R.id.rv);
         txtTotale = findViewById(R.id.totale);
