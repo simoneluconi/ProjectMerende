@@ -69,8 +69,10 @@ public class MainActivity extends AppCompatActivity {
         merende.enqueue(new Callback<List<Merenda>>() {
             @Override
             public void onResponse(Call<List<Merenda>> call, Response<List<Merenda>> response) {
-                adapter = new MerendeAdapter(response.body());
-                mRecyclerView.setAdapter(adapter);
+                if(response.isSuccessful()) {
+                    adapter = new MerendeAdapter(response.body());
+                    mRecyclerView.setAdapter(adapter);
+                }
             }
 
             @Override
