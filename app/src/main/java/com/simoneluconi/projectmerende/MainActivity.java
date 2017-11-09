@@ -1,26 +1,20 @@
 package com.simoneluconi.projectmerende;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.AppCompatImageButton;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.orm.SugarApp;
 import com.orm.SugarContext;
-import com.orm.SugarDb;
 import com.orm.SugarRecord;
 import com.simoneluconi.projectmerende.API.APIInterface;
 import com.simoneluconi.projectmerende.API.Merenda;
@@ -37,9 +31,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL = "https://www.simoneluconi.com/merende/";
-
-    TextView txtTotale;
     public List<Merenda> Merende;
+    TextView txtTotale;
     MerendeAdapter adapter;
 
     @Override
@@ -61,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(new MerendeAdapter());
 
         APIInterface service = retrofit.create(APIInterface.class);
 
@@ -68,15 +62,16 @@ public class MainActivity extends AppCompatActivity {
 
         merende.enqueue(new Callback<List<Merenda>>() {
             @Override
-            public void onResponse(Call<List<Merenda>> call, Response<List<Merenda>> response) {
-                if(response.isSuccessful()) {
-                    adapter = new MerendeAdapter(response.body());
-                    mRecyclerView.setAdapter(adapter);
+            public void onResponse(@NonNull Call<List<Merenda>> call, @NonNull Response<List<Merenda>> response) {
+                if (response.isSuccessful()) {
+                    Merende.clear();
+                    Merende.addAll(response.body());
+                    mRecyclerView.getAdapter().notifyDataSetChanged();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Merenda>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<Merenda>> call, @NonNull Throwable t) {
             }
         });
 
@@ -97,28 +92,56 @@ public class MainActivity extends AppCompatActivity {
             }
 
             UpdateTotale(Merende);
-
-            adapter.notifyDataSetChanged();
         }
         return super.onOptionsItemSelected(item);
     }
 
+    public void UpdateTotale(List<Merenda> merende) {
+        double totale = 0;
 
-    public class MerendeAdapter extends RecyclerView.Adapter<MerendeAdapter.PersonViewHolder> {
+        int pizzeTotali = 0;
+        double prezzoSingoloPizza = 0;
+        double prezzoDoppioPizza = 0;
 
-        MerendeAdapter(List<Merenda> merende) {
-            Merende = merende;
+        for (Merenda m : merende) {
+            if (m.getCurrentQty() > 0) {
+
+                if (m.getNome().toLowerCase().contains("pizza")) {
+                    pizzeTotali += m.getCurrentQty();
+                    prezzoDoppioPizza = m.getPrezzoDoppio();
+                    prezzoSingoloPizza = m.getPrezzo();
+                } else
+                    totale += m.getPrezzo() * m.getCurrentQty();
+
+            }
+
+            SugarRecord.update(m);
         }
 
+        if (pizzeTotali > 0) {
+
+            if (pizzeTotali % 2 == 1) {
+                totale += prezzoDoppioPizza * (pizzeTotali - 1);
+                totale += prezzoSingoloPizza;
+            } else {
+                totale += prezzoDoppioPizza * pizzeTotali;
+            }
+
+        }
+
+        txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€", totale));
+    }
+
+    public class MerendeAdapter extends RecyclerView.Adapter<MerendeAdapter.PersonViewHolder> {
         @Override
         public PersonViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.merende_adapter, parent, false);
-            PersonViewHolder pvh = new PersonViewHolder(v);
-            return pvh;
+            return new PersonViewHolder(v);
         }
 
         @Override
-        public void onBindViewHolder(final PersonViewHolder holder, final int position) {
+        public void onBindViewHolder(final PersonViewHolder holder, final int p) {
+            final int position = holder.getAdapterPosition();
             holder.titolo.setText(Merende.get(position).getNome());
 
             Merenda m = SugarRecord.findById(Merenda.class, Merende.get(position).getId());
@@ -187,42 +210,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-    }
-
-    public void UpdateTotale(List<Merenda> merende) {
-        double totale = 0;
-
-        int pizzeTotali = 0;
-        double prezzoSingoloPizza = 0;
-        double prezzoDoppioPizza = 0;
-
-        for (Merenda m : merende) {
-            if (m.getCurrentQty() > 0) {
-
-                if (m.getNome().toLowerCase().contains("pizza")) {
-                    pizzeTotali += m.getCurrentQty();
-                    prezzoDoppioPizza = m.getPrezzoDoppio();
-                    prezzoSingoloPizza = m.getPrezzo();
-                } else
-                    totale += m.getPrezzo() * m.getCurrentQty();
-
-            }
-
-            SugarRecord.update(m);
-        }
-
-        if (pizzeTotali > 0) {
-
-            if (pizzeTotali % 2 == 1) {
-                totale += prezzoDoppioPizza * (pizzeTotali - 1);
-                totale += prezzoSingoloPizza;
-            } else {
-                totale += prezzoDoppioPizza * pizzeTotali;
-            }
-
-        }
-
-        txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€", totale));
     }
 }
 
