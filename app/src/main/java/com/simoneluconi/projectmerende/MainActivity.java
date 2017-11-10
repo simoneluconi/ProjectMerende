@@ -68,8 +68,19 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<List<Merenda>> call, @NonNull Response<List<Merenda>> response) {
                 if (response.isSuccessful()) {
                     Merende.clear();
-                    Merende.addAll(response.body());
-                    mRecyclerView.getAdapter().notifyDataSetChanged();
+                    if (response.body() != null) {
+
+                        for (Merenda m : response.body()) {
+                            Merenda mtmp = SugarRecord.findById(Merenda.class, m.getId());
+                            if (mtmp != null) {
+                               m.setCurrentQty(mtmp.getCurrentQty());
+                            }
+                        }
+
+                        Merende.addAll(response.body());
+                        mRecyclerView.getAdapter().notifyDataSetChanged();
+                        UpdateTotale(Merende, false);
+                    }
                 }
             }
 
@@ -147,24 +158,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final PersonViewHolder holder, final int p) {
             final int position = holder.getAdapterPosition();
-            holder.titolo.setText(Merende.get(position).getNome());
 
-            Merenda m = SugarRecord.findById(Merenda.class, Merende.get(position).getId());
-            if (m != null) {
-                holder.currQty = m.getCurrentQty();
-                holder.qty.setText(String.valueOf(holder.currQty));
-                Merende.get(position).setCurrentQty(m.getCurrentQty());
-            }
+            final Merenda m = Merende.get(position);
 
+            holder.titolo.setText(m.getNome());
+            holder.qty.setText(String.valueOf(m.getCurrentQty()));
 
             holder.plus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (holder.currQty < Merende.get(position).getQmax()) {
-                        holder.currQty++;
-                        holder.qty.setText(String.valueOf(holder.currQty));
-
-                        Merende.get(position).setCurrentQty(holder.currQty);
+                    if (m.getCurrentQty() < m.getQmax()) {
+                        m.setCurrentQty(m.getCurrentQty() + 1);
+                        holder.qty.setText(String.valueOf(m.getCurrentQty()));
 
                         UpdateTotale(Merende, true);
                     }
@@ -174,16 +179,14 @@ public class MainActivity extends AppCompatActivity {
             holder.min.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (holder.currQty > 0) {
-                        holder.currQty--;
-                        holder.qty.setText(String.valueOf(holder.currQty));
-                        Merende.get(position).setCurrentQty(holder.currQty);
+                    if (m.getCurrentQty() > 0) {
+                        m.setCurrentQty(m.getCurrentQty() - 1);
+                        holder.qty.setText(String.valueOf(m.getCurrentQty()));
                         UpdateTotale(Merende, true);
                     }
                 }
             });
 
-            UpdateTotale(Merende, false);
         }
 
         @Override
@@ -204,8 +207,6 @@ public class MainActivity extends AppCompatActivity {
             ImageButton plus;
             ImageButton min;
 
-            int currQty = 0;
-
             PersonViewHolder(View itemView) {
                 super(itemView);
                 cv = itemView.findViewById(R.id.cv);
@@ -213,8 +214,6 @@ public class MainActivity extends AppCompatActivity {
                 titolo = itemView.findViewById(R.id.nomemerenda);
                 plus = itemView.findViewById(R.id.increment);
                 min = itemView.findViewById(R.id.decrement);
-
-                qty.setText(String.valueOf(currQty));
             }
         }
 
