@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                         for (Merenda m : response.body()) {
                             Merenda mtmp = SugarRecord.findById(Merenda.class, m.getId());
                             if (mtmp != null) {
-                               m.setCurrentQty(mtmp.getCurrentQty());
+                                m.setCurrentQty(mtmp.getCurrentQty());
                             }
                         }
 
@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void UpdateTotale(List<Merenda> merende, boolean updateDB) {
         double totale = 0;
+        int qTtot = 0;
 
         int pizzeTotali = 0;
         double prezzoSingoloPizza = 0;
@@ -128,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 } else
                     totale += m.getPrezzo() * m.getCurrentQty();
 
+                qTtot += m.getCurrentQty();
             }
 
             if (updateDB)
@@ -145,7 +147,11 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€", totale));
+        int qOmgg = qTtot / 5;
+        if (qOmgg == 0)
+            txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€", totale));
+        else
+            txtTotale.setText(String.format(Locale.getDefault(), "Totale: %.2f€ (%2$s omaggio)", totale, qOmgg));
     }
 
     public class MerendeAdapter extends RecyclerView.Adapter<MerendeAdapter.PersonViewHolder> {
@@ -160,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
             final int position = holder.getAdapterPosition();
 
             final Merenda m = Merende.get(position);
-
             holder.titolo.setText(m.getNome());
+
             holder.qty.setText(String.valueOf(m.getCurrentQty()));
 
             holder.plus.setOnClickListener(new View.OnClickListener() {
@@ -182,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                     if (m.getCurrentQty() > 0) {
                         m.setCurrentQty(m.getCurrentQty() - 1);
                         holder.qty.setText(String.valueOf(m.getCurrentQty()));
+
                         UpdateTotale(Merende, true);
                     }
                 }
